@@ -1,0 +1,28 @@
+{% extends 'songs/base_site.html' %}
+{% load static %}
+
+{% block head %}
+<script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.5.min.js"></script>
+<link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.5.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="dropdown">
+  <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+    {{title}}
+    <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+    <li><a href="/songs/results/familiarity_v_hotness">familiarity vs. hottness</a></li>
+    <li><a href="/songs/results/hotness_v_duration">hotness vs. duration</a></li>
+    <li><a href="#">Something else here</a></li>
+    <li role="separator" class="divider"></li>
+    <li><a href="#">Separated link</a></li>
+  </ul>
+</div>
+</div>
+  {{ the_div|safe }}
+  {{ the_div|safe }}
+  {{ the_script|safe }}
+{% endblock %}
