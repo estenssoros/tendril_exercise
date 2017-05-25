@@ -11,6 +11,8 @@ fi
 wget https://s3.amazonaws.com/sebsbucket/cdn/$db
 
 sqlite3 $db "ALTER TABLE songs ADD sha256 VARCHAR(64) DEFAULT NULL"
+sqlite3 $db "ALTER TABLE songs ADD u_artist_name VARCHAR(256) DEFAULT NULL"
+
 python $SRC_DIR/songs/scripts/part1.py --run
 
 wget https://github.com/twbs/bootstrap/releases/download/v3.3.7/bootstrap-3.3.7-dist.zip
