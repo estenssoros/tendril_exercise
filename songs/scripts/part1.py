@@ -36,18 +36,27 @@ class Songs(object):
 
     def get_df(self):
         self.logger.info('reading data from sqlite3')
-        df = pd.read_sql('select track_id, artist_name from songs', con=self.conn)
+        df = pd.read_sql('select track_id, artist_name, artist_id from songs', con=self.conn)
         self.logger.info('converting artist name to sha256')
         df['sha256'] = df.apply(lambda x: self.hasher(x['artist_name']), axis=1)
+        self.logger.info('applying uniform arist name')
+        artist_ids = pd.unique(df['artist_id'])
+        gb = df.groupby(['artist_id', 'artist_name']).size().reset_index()
+        artist_translate = {}
+        for artist_id in tqdm(artist_ids):
+            sub_df = gb[gb['artist_id'] == artist_id]
+            sub_df.sort_values(0, ascending=False)
+            artist_translate[artist_id] = sub_df.iloc[0]['artist_name']
+        df['u_artist_name'] = df.apply(lambda x: artist_translate[x['artist_id']], axis=1)
         return df
 
     def update_table(self):
         self.logger.info('updating table')
         # 1.44s user 0.14s system 99% cpu 1.596 total
-        sql = '''UPDATE songs SET sha256 = ? WHERE track_id = ?'''
+        sql = '''UPDATE songs SET sha256 = ?, u_artist_name = ? WHERE track_id = ?'''
         count = 1
         for i, r in tqdm(self.df.iterrows(), total=len(self.df), desc='syncing sqlite3'):
-            row = (r['sha256'], r['track_id'])
+            row = (r['sha256'], r['u_artist_name'], r['track_id'])
             self.curs.execute(sql, row)
             count += 1
             if count % 100 == 0:
