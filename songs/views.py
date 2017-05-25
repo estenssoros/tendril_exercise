@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from scripts.plotting import familiarity_v_hotness, hotness_v_duration
+from scripts.plotting import Plotter
 
 
 def home(request):
@@ -9,13 +9,21 @@ def home(request):
 
 
 def results(request, chart_type=None):
-    plotters = {'familiarity_v_hotness': familiarity_v_hotness,
-                'hotness_v_duration': hotness_v_duration}
+    plotter = Plotter()
+    options = [x for x in dir(plotter) if not x.startswith('_')]
     if chart_type == None:
-        plotter = familiarity_v_hotness
+        chart_type = 'familiarity_v_hotness'
+        plotter = getattr(plotter, chart_type)
     else:
-        plotter = plotters[chart_type]
+        try:
+            plotter = getattr(plotter, chart_type)
+        except AttributeError:
+            chart_type = 'familiarity_v_hotness'
+            plotter = getattr(plotter, chart_type)
 
     script, div = plotter()
-    context = {'title': chart_type, "the_script": script, "the_div": div}
+    context = {'options': options,
+               'title': chart_type,
+               'the_script': script,
+               'the_div': div}
     return render(request, 'songs/results.html', context)
