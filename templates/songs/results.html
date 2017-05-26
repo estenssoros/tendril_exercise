@@ -7,22 +7,61 @@
 {% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <div class="dropdown">
-  <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-    {{title|make_title}}
-    <span class="caret"></span>
+<p>
+  <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample1" aria-expanded="false" aria-controls="collapseExample">
+    Descriptive Statistics
   </button>
-  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-    {% for option in options %}
-    <li><a href="/songs/results/{{ option }}">{{ option|make_title }}</a></li>
-    {% endfor %}
-    <li role="separator" class="divider"></li>
-    <li><a href="#">Separated link</a></li>
-  </ul>
+  <button class="btn btn-success" type="button" data-toggle="collapse" data-target="#collapseExample2" aria-expanded="false" aria-controls="collapseExample">
+    Correlation Matrix
+  </button>
+</p>
+<div class="collapse" id="collapseExample1">
+  <div class="card card-block">
+    <div class="panel panel-primary">
+      <div class="panel-heading">Descriptive Statistics</div>
+      <div class="panel-body">
+        {{ desc|safe }}
+      </div>
+    </div>
+  </div>
 </div>
+<div class="collapse" id="collapseExample2">
+  <div class="card card-block">
+    <div class="panel panel-success">
+      <div class="panel-heading">Descriptive Statistics</div>
+      <div class="panel-body">
+        {{ corr|safe }}
+      </div>
+    </div>
+  </div>
 </div>
+<hr>
+<div class="row margin-bottom-50">
+  <div class='col-md-3'>
+    <div class="dropdown">
+      <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+        {{ title|make_title }}
+        <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+        {% for option in options %}
+        <li><a href="/songs/results/{{ option }}">{{ option|make_title }}</a></li>
+        {% endfor %}
+        <li role="separator" class="divider"></li>
+        <li><a href="#">Separated link</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class='col-md-9'>
+    <h5>{{doc}}</h5>
+  </div>
+</div>
+<br>
+<div class="row">
+
   {{ the_div|safe }}
-  {{ the_div|safe }}
-  {{ the_script|safe }}
+</div>
 {% endblock %}
+{%block scripts%}
+  {{ the_script|safe }}
+{%endblock%}
