@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 import common_env
 import mylogger
+from plotting import plot_scatter
 
 parser = ArgumentParser(description='validate sqoop commands by comparing mysql to hadoop')
 parser.add_argument('--run', action="store_true")
@@ -36,7 +37,7 @@ class Songs(object):
 
     def get_df(self):
         self.logger.info('reading data from sqlite3')
-        df = pd.read_sql('select track_id, artist_name, artist_id from songs', con=self.conn)
+        df = pd.read_sql('select * from songs', con=self.conn)
         self.logger.info('converting artist name to sha256')
         df['sha256'] = df.apply(lambda x: self.hasher(x['artist_name']), axis=1)
         self.logger.info('applying uniform arist name')
@@ -69,6 +70,11 @@ class Songs(object):
 
     def run(self):
         self.update_table()
+        cols = sorted(['duration', 'artist_familiarity', 'artist_hotttnesss', 'year'])
+        self.logger.info('creating scatter matrix')
+        m = self.df['year'] > 0
+        n = self.df['artist_hotttnesss'] > 0
+        plot_scatter(self.df[cols][m & n])
         self.shutdown()
 
 
