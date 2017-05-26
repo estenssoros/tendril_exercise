@@ -1,3 +1,7 @@
+import io
+import os
+
+import matplotlib.pyplot as plt
 import pandas as pd
 from bokeh.charts import HeatMap, Histogram, bins
 from bokeh.embed import components
@@ -5,9 +9,11 @@ from bokeh.models import Range1d
 from bokeh.plotting import figure
 from bokeh.resources import CDN
 from django.db import connections
+from pandas.tools.plotting import scatter_matrix
 from tqdm import tqdm
 
 import common_env
+from aws import connect_s3
 
 
 class Plotter(object):
@@ -80,7 +86,39 @@ class Plotter(object):
         return components(hist, CDN)
 
 
-# TODO featured artists over time along with hotttnesss
+def save_image(self, img_data, title):
+    save_name = to_snake(title) + '.png'
+    path = os.path.join(directory, save_name)
+    key = bucket.new_key(path)
+    key.set_contents_from_file(img_data, policy='public-read')
+
+
+def plot_scatter(df):
+    for col in df.columns:
+        df[col] = df[col].astype(float)
+    axs = scatter_matrix(df, alpha=0.2, figsize=(6, 6), diagonal='kde')
+    n = len(df.columns)
+    for x in range(n):
+        for y in range(n):
+            ax = axs[x, y]
+            ax.xaxis.label.set_rotation(90)
+            ax.yaxis.label.set_rotation(0)
+            ax.yaxis.labelpad = 50
+    plt.tight_layout()
+    img_data = io.BytesIO()
+    plt.savefig(img_data, dpi=250)
+    img_data.seek(0)
+    plt.close()
+
+    directory = 'tendril/images'
+    S3_SITE = 'http://s3.amazonaws.com/tendril'
+    bucket = connect_s3()
+    save_name = 'scatter_matrix.png'
+    path = os.path.join(directory, save_name)
+    key = bucket.new_key(path)
+    key.set_contents_from_file(img_data, policy='public-read')
+    url = os.path.join(S3_SITE, directory, save_name)
+
 
 if __name__ == '__main__':
     pd.set_option('display.max_rows', 300)
