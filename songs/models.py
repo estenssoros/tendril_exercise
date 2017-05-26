@@ -3,13 +3,10 @@ from __future__ import unicode_literals
 from django.db import models
 
 
-# Create your models here.
-
-
 class Song(models.Model):
-    track_id = models.CharField(max_length=18, blank=True, null=True)
+    track_id = models.CharField(primary_key=True, max_length=18)
     title = models.CharField(max_length=256, blank=True, null=True)
-    songs_id = models.CharField(max_length=18, blank=True, null=True)
+    song_id = models.CharField(max_length=18, blank=True, null=True)
     release = models.CharField(max_length=256, blank=True, null=True)
     artist_id = models.CharField(max_length=18, blank=True, null=True)
     artist_mbid = models.CharField(max_length=36, blank=True, null=True)
