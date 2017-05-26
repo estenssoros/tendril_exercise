@@ -1,0 +1,6 @@
+Artist Id|A unique idea associated with each artist.
+Artist Name|This field is not unique as artist_id. E.g Juelz Santana, Juelz Santana / Bezel and Juelz Santana / Freekey Zeekey / Monique Garnett all have the artist_id ARZXTEY1187B9997A7.
+Duration|How long a song is in seconds.
+Artist Familiarity|That's a good question. From the documentation, this field is an "algorithmic estimation". My best assumption is that this is akin to how long an artist has managed to stay popular.
+Artist Hotttnesss|Besides having too many t's and s's, this field is also algorithmically estimated and could possibly indicated how popular the artist was at the time of song release.
+sha256|A one-way 256-bit hash of the artist name. E.g Taylor Swift's sha256 hash is c2ce09cb217d8d65cc7085546021ff3468401b68b634e963323f2bdfe030bc8e and Wildest Dreams is the greatest music video of all time.

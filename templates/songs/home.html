@@ -3,9 +3,52 @@
   <h1>Million Songs Database</h1>
   <br>
   <div class="row">
-    <div class="btn-group btn-group-justified" role="group" aria-label="...">
-      <a class="btn btn-lg btn-success" href="/songs/results" role="button">Results</a>
+    <!-- <div class="btn-group btn-group-justified" role="group" aria-label="...">
+
+    </div> -->
+  </div>
+</div>
+<p>
+  <button class="btn btn-primary btn-lg active" type="button" data-toggle="collapse" data-target="#collapseExample1" aria-expanded="false" aria-controls="collapseExample">
+    <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span> See the data
+  </button>
+  <button class="btn btn-default btn-lg active" type="button" data-toggle="collapse" data-target="#collapseExample2" aria-expanded="false" aria-controls="collapseExample">
+    Ok great, but what is it?
+  </button>
+  <a class="btn btn-lg btn-success" href="/songs/results" role="button">Show me some results</a>
+</p>
+
+<div class="collapse" id="collapseExample2">
+  <div class="card card-block">
+    <h1>More particularly, what are these...</h1>
+    <div class="panel-group" id="accordion">
+      {% for field in fields %}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{forloop.counter}}">
+            {{field.name}}</a>
+          </h4>
+        </div>
+        <div id="collapse{{forloop.counter}}" class="panel-collapse collapse {%if forloop.first%}in{%endif%}">
+          <div class="panel-body">{{field.text}}</div>
+        </div>
+      </div>
+      {% endfor %}
     </div>
   </div>
 </div>
+<div class="collapse" id="collapseExample1">
+  <div class="card card-block">
+    <div class="panel panel-primary">
+      <div class="panel-heading">Data Sample</div>
+      <div class="panel-body">
+        <div class="table-responsive">
+          {{ table|safe }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 {%endblock%}

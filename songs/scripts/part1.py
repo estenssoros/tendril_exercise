@@ -71,10 +71,10 @@ class Songs(object):
     def run(self):
         self.update_table()
         cols = sorted(['duration', 'artist_familiarity', 'artist_hotttnesss', 'year'])
-        self.logger.info('creating scatter matrix')
-        m = self.df['year'] > 0
-        n = self.df['artist_hotttnesss'] > 0
-        plot_scatter(self.df[cols][m & n])
+        # self.logger.info('creating scatter matrix')
+        # m = self.df['year'] > 0
+        # n = self.df['artist_hotttnesss'] > 0
+        # plot_scatter(self.df[cols][m & n])
         self.shutdown()
 
 

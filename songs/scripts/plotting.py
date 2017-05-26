@@ -1,6 +1,7 @@
 import io
 import os
 
+import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 from bokeh.charts import HeatMap, Histogram, bins
@@ -8,12 +9,20 @@ from bokeh.embed import components
 from bokeh.models import Range1d
 from bokeh.plotting import figure
 from bokeh.resources import CDN
+from django.conf import settings
 from django.db import connections
 from pandas.tools.plotting import scatter_matrix
 from tqdm import tqdm
 
 import common_env
 from aws import connect_s3
+
+matplotlib.use('Agg')
+
+
+def ensure_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 
 class Plotter(object):
@@ -22,30 +31,6 @@ class Plotter(object):
 
     def _sql_pandas(self, sql):
         return pd.read_sql(sql, con=connections['default'])
-
-    def familiarity_v_hotness(self):
-        '''
-        Hotness as a function of familiarity
-        '''
-        df = self._sql_pandas('select artist_familiarity, artist_hotttnesss, year from songs')
-        df = df[df['artist_hotttnesss'] > 0]
-        plot = figure()
-        plot.xaxis.axis_label = 'familiarity'
-        plot.yaxis.axis_label = 'hotttnesss'
-        plot.scatter(df['artist_familiarity'], df['artist_hotttnesss'], size=3, color="#3A5785", alpha=0.6)
-        return components(plot, CDN)
-
-    def hotness_v_duration(self):
-        '''
-        Hotness as a function of duration
-        '''
-        df = self._sql_pandas('select duration, artist_hotttnesss, year from songs')
-        df = df[df['artist_hotttnesss'] > 0]
-        plot = figure()
-        plot.xaxis.axis_label = 'duration'
-        plot.yaxis.axis_label = 'hotttnesss'
-        plot.scatter(df['duration'], df['artist_hotttnesss'], size=3, color="#3A5785", alpha=0.6)
-        return components(plot, CDN)
 
     def heatmap(self):
         '''
@@ -62,28 +47,32 @@ class Plotter(object):
         '''
         sql = '''
         SELECT year
+            ,count(*) as cnt
         FROM songs
         WHERE year > 0
+        GROUP BY year
         '''
         df = self._sql_pandas(sql)
-        years = pd.unique(df['year'])
-        hist = Histogram(df, values='year', bins=len(years))
-        return components(hist, CDN)
+        data = {'labels': df['year'].values.tolist(),
+                'values': df['cnt'].values.tolist()}
+        return data
 
-    def feature_count_by_year(self):
+    def featured_count_by_year(self):
         '''
         Songs with featured artists by year
         '''
         sql = '''
-        SELECT artist_name,year
+        SELECT artist_name
+            ,year
         FROM songs
         WHERE year > 0
         '''
         df = self._sql_pandas(sql)
         df = df[['year']][df['artist_name'].str.contains('feat.')]
-        years = pd.unique(df['year'])
-        hist = Histogram(df, values='year', bins=len(years))
-        return components(hist, CDN)
+        gb = df.groupby('year').size().reset_index()
+        data = {'labels': gb['year'].values.tolist(),
+                'values': gb[0].values.tolist()}
+        return data
 
 
 def save_image(self, img_data, title):
@@ -105,19 +94,29 @@ def plot_scatter(df):
             ax.yaxis.label.set_rotation(0)
             ax.yaxis.labelpad = 50
     plt.tight_layout()
-    img_data = io.BytesIO()
-    plt.savefig(img_data, dpi=250)
-    img_data.seek(0)
-    plt.close()
 
-    directory = 'tendril/images'
     S3_SITE = 'http://s3.amazonaws.com/tendril'
-    bucket = connect_s3()
     save_name = 'scatter_matrix.png'
+
+    aws = False
+    try:
+        bucket = connect_s3()
+        aws = True
+        directory = 'tendril/images'
+    except KeyError:
+        directory = os.path.join(settings.BASE_DIR, 'songs/static/songs/images')
+        ensure_exists(directory)
+
     path = os.path.join(directory, save_name)
-    key = bucket.new_key(path)
-    key.set_contents_from_file(img_data, policy='public-read')
-    url = os.path.join(S3_SITE, directory, save_name)
+    if aws:
+        img_data = io.BytesIO()
+        plt.savefig(img_data, dpi=250)
+        img_data.seek(0)
+        key = bucket.new_key(path)
+        key.set_contents_from_file(img_data, policy='public-read')
+    else:
+        plt.savefig(path, dpi=250)
+    plt.close()
 
 
 if __name__ == '__main__':
