@@ -18,6 +18,9 @@ class Plotter(object):
         return pd.read_sql(sql, con=connections['default'])
 
     def familiarity_v_hotness(self):
+        '''
+        Hotness as a function of familiarity
+        '''
         df = self._sql_pandas('select artist_familiarity, artist_hotttnesss, year from songs')
         df = df[df['artist_hotttnesss'] > 0]
         plot = figure()
@@ -27,6 +30,9 @@ class Plotter(object):
         return components(plot, CDN)
 
     def hotness_v_duration(self):
+        '''
+        Hotness as a function of duration
+        '''
         df = self._sql_pandas('select duration, artist_hotttnesss, year from songs')
         df = df[df['artist_hotttnesss'] > 0]
         plot = figure()
@@ -36,12 +42,18 @@ class Plotter(object):
         return components(plot, CDN)
 
     def heatmap(self):
+        '''
+        Hotness as impacted by year and duration of song
+        '''
         df = self._sql_pandas('select artist_familiarity, duration, artist_hotttnesss, year from songs')
         df = df[df['year'] > 0]
-        hm = HeatMap(df, x='year', y=bins('duration'), values='artist_hotttnesss', title='artist_hotttnesss')
+        hm = HeatMap(df, x='year', y=bins('duration'), values='artist_hotttnesss')
         return components(hm, CDN)
 
     def song_count_by_year(self):
+        '''
+        The count of songs by year
+        '''
         sql = '''
         SELECT year
         FROM songs
@@ -52,7 +64,10 @@ class Plotter(object):
         hist = Histogram(df, values='year', bins=len(years))
         return components(hist, CDN)
 
-    def featured_by_year(self):
+    def feature_count_by_year(self):
+        '''
+        Songs with featured artists by year
+        '''
         sql = '''
         SELECT artist_name,year
         FROM songs
