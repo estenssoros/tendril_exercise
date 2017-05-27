@@ -2,18 +2,17 @@ import json
 import os
 
 import pandas as pd
+import spotipy
 from django.conf import settings
 from django.core.exceptions import FieldError
 from django.db import connections
-from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from models import Song
 from scripts.plotting import Plotter
-from serializers import SongSerializer
+from scripts.search_spotify import find_artist, find_song
 
 
 def home(request):
@@ -62,7 +61,15 @@ def results(request):
                'corr': corr,
                'charts': json.dumps(charts)}
     if request.method == 'GET':
+        artist_name = request.GET.get('artist_name')
+        title = request.GET.get('title')
         context.update(request.GET.dict())
+        if artist_name:
+            meta_data = find_artist(artist_name)
+        if title:
+            meta_data = find_song(title)
+        context['meta_data'] = meta_data
+    print context['meta_data']
     return render(request, 'songs/results.html', context)
 
 

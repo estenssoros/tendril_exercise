@@ -72,10 +72,32 @@
 <div class="page-header">
   <h1>Artist: {{artist_name}}</h1>
 </div>
+<div class="row">
+  <div class="col-md-6">
+    <img src="{{meta_data.image_url}}" class="img-thumbnail">
+  </div>
+  <div class="col-md-6">
+    <audio controls autoplay>
+      <source src="{{meta_data.preview_url}}" type="audio/mp3">
+    </audio>
+  </div>
+</div>
+<hr>
 {% elif title %}
 <div class="page-header">
   <h1>Title: {{title}}</h1>
 </div>
+<div class="row">
+  <div class="col-md-6">
+    <img src="{{meta_data.image_url}}" class="img-thumbnail">
+  </div>
+  <div class="col-md-6">
+    <audio controls autoplay>
+      <source src="{{meta_data.preview_url}}" type="audio/mp3">
+    </audio>
+  </div>
+</div>
+<hr>
 {% else %}
 <hr>
 {% endif %}
