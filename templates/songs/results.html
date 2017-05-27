@@ -5,6 +5,7 @@
 <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.5.min.js"></script>
 <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.5.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
+<link href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" rel="Stylesheet"></link>
 {% endblock %}
 
 {% block content %}
@@ -68,17 +69,59 @@
 </div>
 <hr>
 <div class="row">
-  <div class="col-md-4">
+  <div class="col-md-6">
     <canvas id="myChart2" width="400" height="400"></canvas>
   </div>
-  <div class="col-md-4">
+  <div class="col-md-6">
   <canvas id="myChart3" width="400" height="400"></canvas>
   </div>
 </div>
+<div class="row">
+  <div class="col-md-4">
+  <canvas id="myChart4" width="400" height="400"></canvas>
+  </div>
+  <div class="col-md-4">
+    <canvas id="duration-distribution" width="400" height="400"></canvas>
+  </div>
+  <div class="col-md-4">
+    <canvas id="familiarity-distribution" width="400" height="400"></canvas>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-6">
+  <form class="form-inline" id="searchform" action="">
+    <div class="form-group row">
+      <label class="mr-sm-2" for="artist_name">Artist:  </label>
+      <input class="form-control autocomplete ui-autocomplete-input" id="artist_name" placeholder="Start typing..." type="text" name="search">
+    </div>
+  </form>
+  </div>
+  <div class="col-md-6">
+  <form class="form-inline" id="searchform" action="">
+    <div class="form-group row">
+      <label class="mr-sm-2" for="artist_name">Song:  </label>
+      <input class="form-control autocomplete ui-autocomplete-input" id="song_name" placeholder="Start typing..." type="text" name="search">
+    </div>
+  </form>
+  </div>
+</div>
+
+
 {% endblock %}
 {%block scripts%}
+<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js" ></script>
 {%endblock%}
 {% block jquery %}
+
+$("#artist_name").autocomplete({
+  source: "/songs/api/artist_autocomplete/",
+  minLength: 3,
+});
+
+$("#song_name").autocomplete({
+  source: "/songs/api/song_autocomplete/",
+  minLength: 3,
+});
 
 $("select").change(function() {
   xAxis = $('#x_axis :selected').val();
@@ -110,20 +153,10 @@ function setChart1(data) {
       datasets: [{
         data: data.scatter,
         backgroundColor: [
-          'rgba(255, 99, 132, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(255, 206, 86, 0.2)',
-          'rgba(75, 192, 192, 0.2)',
-          'rgba(153, 102, 255, 0.2)',
-          'rgba(255, 159, 64, 0.2)'
+          'rgba(255, 99, 132, 0.2)'
         ],
         borderColor: [
           'rgba(255,99,132,1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 159, 64, 1)'
         ],
         borderWidth: 1,
         pointRadius: 1
@@ -151,10 +184,10 @@ function setChart1(data) {
           }
         }]
       },
-      title:{
-        display:true,
-        fontSize:24,
-        text:data.title
+      title: {
+        display: true,
+        fontSize: 24,
+        text: data.title
       }
 
     }
@@ -164,85 +197,240 @@ function setChart1(data) {
 $.ajax({
   method: "GET",
   url: "/songs/api/plot_api/",
-  data :{
-    chart_type: 'song_count_by_year'
+  data: {
+    chart_type: 'duration_distribution'
   },
-  success: function(data){
-    setChart2(data);
+  success: function(data) {
+    setDurationDist(data);
   },
-  error: function(error_data){
+  error: function(error_data) {
     console.log('error');
     console.log(error_data);
   }
 });
 
-function setChart2(data){
-  var ctx = document.getElementById("myChart2");
+function setDurationDist(data) {
+  var ctx = document.getElementById("duration-distribution");
   var myChart = new Chart(ctx, {
     type: 'bar',
     data: {
-        labels : data.labels,
-        datasets: [{
-            data: data.values,
-            backgroundColor : 'rgba(255, 99, 132, 0.2)',
-            borderColor: 'rgba(255,99,132,1)',
-            borderWidth: 1
-        }]
+      labels: data.labels,
+      datasets: [{
+        data: data.values,
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1
+      }]
     },
     options: {
+      title: {
+        display: true,
+        text: data.title,
+        size: 24,
+      },
       legend: {
         display: false
       },
-        scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero:true
-                }
-            }]
-        }
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
     }
-});
+  });
 };
 
 $.ajax({
   method: "GET",
   url: "/songs/api/plot_api/",
-  data :{
-    chart_type: 'featured_count_by_year'
+  data: {
+    chart_type: 'familiarity_distribution'
   },
-  success: function(data){
-    setChart3(data);
+  success: function(data) {
+    setFamiliarityDist(data);
   },
-  error: function(error_data){
+  error: function(error_data) {
     console.log('error');
     console.log(error_data);
   }
 });
-function setChart3(data){
+
+function setFamiliarityDist(data) {
+  var ctx = document.getElementById("familiarity-distribution");
+  var myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        data: data.values,
+        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+        borderColor: 'rgba(153, 102, 255, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: data.title,
+        size: 24,
+      },
+      legend: {
+        display: false
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
+    }
+  });
+};
+
+$.ajax({
+  method: "GET",
+  url: "/songs/api/plot_api/",
+  data: {
+    chart_type: 'song_count_by_year'
+  },
+  success: function(data) {
+    setChart2(data);
+  },
+  error: function(error_data) {
+    console.log('error');
+    console.log(error_data);
+  }
+});
+
+function setChart2(data) {
+  var ctx = document.getElementById("myChart2");
+  var myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        data: data.values,
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgba(255,99,132,1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: data.title,
+        size: 24,
+      },
+      legend: {
+        display: false
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
+    }
+  });
+};
+
+$.ajax({
+  method: "GET",
+  url: "/songs/api/plot_api/",
+  data: {
+    chart_type: 'featured_count_by_year'
+  },
+  success: function(data) {
+    setChart3(data);
+  },
+  error: function(error_data) {
+    console.log('error');
+    console.log(error_data);
+  }
+});
+
+function setChart3(data) {
   var ctx = document.getElementById("myChart3");
   var myChart = new Chart(ctx, {
     type: 'bar',
     data: {
-        labels : data.labels,
-        datasets: [{
-            data: data.values,
-            backgroundColor : 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-        }]
+      labels: data.labels,
+      datasets: [{
+        data: data.values,
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      }]
     },
     options: {
+      title: {
+        display: true,
+        text: data.title,
+        size: 24,
+      },
       legend: {
         display: false
       },
-        scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero:true
-                }
-            }]
-        }
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
     }
+  });
+};
+
+$.ajax({
+  method: "GET",
+  url: "/songs/api/plot_api/",
+  data: {
+    chart_type: 'hotttnesss_distribution'
+  },
+  success: function(data) {
+    setChart4(data);
+  },
+  error: function(error_data) {
+    console.log('error');
+    console.log(error_data);
+  }
 });
+
+function setChart4(data) {
+  var ctx = document.getElementById("myChart4");
+  var myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        data: data.values,
+        backgroundColor: 'rgba(255, 206, 86, 0.2)',
+        borderColor: 'rgba(255, 206, 86, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: data.title,
+        size: 24,
+      },
+      legend: {
+        display: false
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
+    }
+  });
 };
 {% endblock %}
