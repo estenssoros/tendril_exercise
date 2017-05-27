@@ -2,6 +2,7 @@ import os
 
 import pandas as pd
 from django.conf import settings
+from django.core.exceptions import FieldError
 from django.db import connections
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
@@ -54,7 +55,10 @@ class ChartAPI(APIView):
         query_dict = request.GET
         x_axis = query_dict.get('x_axis')
         y_axis = query_dict.get('y_axis')
-        df = pd.DataFrame(list(Song.objects.all().values(x_axis, y_axis)))
+        try:
+            df = pd.DataFrame(list(Song.objects.all().values(x_axis, y_axis)))
+        except FieldError:
+            return Response('')
         m = df[x_axis] > 0
         n = df[y_axis] > 0
         df = df[m & n]
@@ -68,17 +72,47 @@ class ChartAPI(APIView):
         return Response(data)
 
 
+def make_title(s):
+    s = [x.title() for x in s.split('_')]
+    return ' '.join(s)
+
+
 class PlotAPI(APIView):
     authentication_classes = []
     permission_classes = []
+
     def get(self, request, format=None):
         plotter = Plotter()
         query_dict = request.GET
         chart_type = query_dict.get('chart_type')
-        func = getattr(plotter,chart_type)
+        func = getattr(plotter, chart_type)
         data = func()
+        data['title'] = make_title(chart_type)
         return Response(data)
 
+
+class ArtistAutoCompleteAPI(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, format=None):
+        if request.is_ajax():
+            q = request.GET.get('term', '')
+            query_set = Song.objects.filter(artist_name__icontains=q)
+            data = sorted(set([x.artist_name for x in query_set]))
+            return Response(data)
+
+
+class SongAutoCompleteAPI(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, format=None):
+        if request.is_ajax():
+            q = request.GET.get('term', '')
+            query_set = Song.objects.filter(title__icontains=q)
+            data = sorted(set([x.title for x in query_set]))
+            return Response(data)
 
 # def results(request, chart_type=None):
 #     cols = ['duration', 'artist_familiarity', 'artist_hotttnesss', 'year']
