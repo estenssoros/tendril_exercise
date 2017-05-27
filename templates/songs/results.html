@@ -70,6 +70,25 @@
 <hr>
 <div class="row">
   <div class="col-md-6">
+  <form class="form-inline" id="searchform" action="">
+    <div class="form-group row">
+      <label class="mr-sm-2" for="artist_name">Artist:  </label>
+      <input class="form-control autocomplete ui-autocomplete-input" id="artist_name" placeholder="Start typing..." type="text" name="search">
+    </div>
+  </form>
+  </div>
+  <div class="col-md-6">
+  <form class="form-inline" id="searchform" action="">
+    <div class="form-group row">
+      <label class="mr-sm-2" for="artist_name">Song:  </label>
+      <input class="form-control autocomplete ui-autocomplete-input" id="song_name" placeholder="Start typing..." type="text" name="search">
+    </div>
+  </form>
+  </div>
+</div>
+<hr>
+<div class="row">
+  <div class="col-md-6">
     <canvas id="myChart2" width="400" height="400"></canvas>
   </div>
   <div class="col-md-6">
@@ -85,24 +104,6 @@
   </div>
   <div class="col-md-4">
     <canvas id="familiarity-distribution" width="400" height="400"></canvas>
-  </div>
-</div>
-<div class="row">
-  <div class="col-md-6">
-  <form class="form-inline" id="searchform" action="">
-    <div class="form-group row">
-      <label class="mr-sm-2" for="artist_name">Artist:  </label>
-      <input class="form-control autocomplete ui-autocomplete-input" id="artist_name" placeholder="Start typing..." type="text" name="search">
-    </div>
-  </form>
-  </div>
-  <div class="col-md-6">
-  <form class="form-inline" id="searchform" action="">
-    <div class="form-group row">
-      <label class="mr-sm-2" for="artist_name">Song:  </label>
-      <input class="form-control autocomplete ui-autocomplete-input" id="song_name" placeholder="Start typing..." type="text" name="search">
-    </div>
-  </form>
   </div>
 </div>
 
