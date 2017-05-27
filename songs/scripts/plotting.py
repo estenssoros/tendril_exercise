@@ -26,21 +26,30 @@ def ensure_exists(path):
         os.makedirs(path)
 
 
+def make_title(s):
+    s = [x.title() for x in s.split('_')]
+    return ' '.join(s)
+
+
+def bins_to_list(bins):
+    bins = list(bins)
+    tuples = [x[1:-1].split(', ') for x in bins]
+    labels = []
+    for t in tuples:
+        labels.append(t[0])
+        labels.append(t[1])
+    return labels
+
+
 class Plotter(object):
-    def __init__(self):
-        pass
+    def __init__(self, chart_type, artist_name=None, title=None):
+        self.plot = getattr(self, chart_type)
+        self.artist_name = artist_name
+        self.title = title
+        self.data = {'title': make_title(chart_type)}
 
     def _sql_pandas(self, sql):
         return pd.read_sql(sql, con=connections['default'])
-
-    def hotness_bubble(self):
-        '''
-        Hotness as impacted by year and duration of song
-        '''
-        df = self._sql_pandas('select artist_familiarity, duration, artist_hotttnesss, year from songs')
-        df = df[df['year'] > 0]
-        hm = HeatMap(df, x='year', y=bins('duration'), values='artist_hotttnesss')
-        return components(hm, CDN)
 
     def hotttnesss_distribution(self):
         '''
@@ -50,42 +59,65 @@ class Plotter(object):
         bins = np.linspace(df['artist_hotttnesss'].min(), df['artist_hotttnesss'].max(), 30)
         binned = pd.cut(df['artist_hotttnesss'], bins)
         gb = binned.groupby(binned).size().reset_index()
-        _ = [x[1:-1].split(', ') for x in list(gb['artist_hotttnesss'])]
-        labels = []
-        for t in _:
-            labels.append(t[0])
-            labels.append(t[1])
-        data = {'labels': labels[:-1],
-                'values': list(gb[0])}
-        return data
+        labels = bins_to_list(gb['artist_hotttnesss'])
+        self.data['labels'] = labels[:-1]
+        self.data['ds1'] = {'values': list(gb[0])}
+
+        if self.artist_name or self.title:
+            if self.artist_name:
+                df = self._sql_pandas('select artist_hotttnesss from songs where u_artist_name = "%s"' % self.artist_name)
+            if self.title:
+                df = self._sql_pandas('select artist_hotttnesss from songs where title = "%s"' % self.title)
+            binned = pd.cut(df['artist_hotttnesss'], bins).tolist()
+            m = gb['artist_hotttnesss'].isin(binned)
+            ds2 = gb.copy()
+            ds2.loc[~m, 0] = 0
+            data = {'values': list(ds2[0])}
+            self.data['ds2'] = data
+
+        return self.data
 
     def familiarity_distribution(self):
         df = self._sql_pandas('select artist_familiarity from songs')
         bins = np.linspace(df['artist_familiarity'].min(), df['artist_familiarity'].max(), 30)
         binned = pd.cut(df['artist_familiarity'], bins)
         gb = binned.groupby(binned).size().reset_index()
-        _ = [x[1:-1].split(', ') for x in list(gb['artist_familiarity'])]
-        labels = []
-        for t in _:
-            labels.append(t[0])
-            labels.append(t[1])
-        data = {'labels': labels[:-1],
-                'values': list(gb[0])}
-        return data
+        labels = bins_to_list(gb['artist_familiarity'])
+        self.data['labels'] = labels[:-1]
+        self.data['ds1'] = {'values': list(gb[0])}
+        if self.artist_name or self.title:
+            if self.artist_name:
+                df = self._sql_pandas('select artist_familiarity from songs where u_artist_name = "%s"' % self.artist_name)
+            if self.title:
+                df = self._sql_pandas('select artist_familiarity from songs where title = "%s"' % self.title)
+            binned = pd.cut(df['artist_familiarity'], bins).tolist()
+            m = gb['artist_familiarity'].isin(binned)
+            ds2 = gb.copy()
+            ds2.loc[~m, 0] = 0
+            data = {'values': list(ds2[0])}
+            self.data['ds2'] = data
+        return self.data
 
     def duration_distribution(self):
         df = self._sql_pandas('select duration from songs')
         bins = np.linspace(df['duration'].min(), df['duration'].max(), 30)
         binned = pd.cut(df['duration'], bins)
         gb = binned.groupby(binned).size().reset_index()
-        _ = [x[1:-1].split(', ') for x in list(gb['duration'])]
-        labels = []
-        for t in _:
-            labels.append(t[0])
-            labels.append(t[1])
-        data = {'labels': labels[:-1],
-                'values': list(gb[0])}
-        return data
+        labels = bins_to_list(gb['duration'])
+        self.data['labels'] = labels[:-1]
+        self.data['ds1'] = {'values': list(gb[0])}
+        if self.artist_name or self.title:
+            if self.artist_name:
+                df = self._sql_pandas('select duration from songs where u_artist_name = "%s"' % self.artist_name)
+            if self.title:
+                df = self._sql_pandas('select duration from songs where title = "%s"' % self.title)
+            binned = pd.cut(df['duration'], bins).tolist()
+            m = gb['duration'].isin(binned)
+            ds2 = gb.copy()
+            ds2.loc[~m, 0] = 0
+            data = {'values': list(ds2[0])}
+            self.data['ds2'] = data
+        return self.data
 
     def song_count_by_year(self):
         '''
@@ -99,9 +131,31 @@ class Plotter(object):
         GROUP BY year
         '''
         df = self._sql_pandas(sql)
-        data = {'labels': df['year'],
-                'values': df['cnt']}
-        return data
+        self.data['labels'] = df['year']
+        self.data['ds1'] = {'values': list(df['cnt'])}
+        if self.artist_name or self.title:
+            if self.artist_name:
+                sql = '''
+                SELECT year
+                    , count(*) as cnt
+                FROM songs
+                WHERE u_artist_name = "%s"
+                GROUP BY year
+                '''
+                new_df = self._sql_pandas(sql % self.artist_name)
+            if self.title:
+                sql = '''
+                SELECT year
+                    , count(*) as cnt
+                FROM songs
+                WHERE title = "%s"
+                GROUP BY year
+                '''
+                new_df = self._sql_pandas(sql % self.title)
+            ds2 = pd.merge(df, new_df, how='left', on='year').fillna(0)
+            data = {'values': list(ds2['cnt_y'])}
+            self.data['ds2'] = data
+        return self.data
 
     def featured_count_by_year(self):
         '''
@@ -118,12 +172,39 @@ class Plotter(object):
         u_names = pd.unique(df['u_artist_name']).tolist()
         df = df[['year']][~df['artist_name'].isin(u_names)]
         gb = df.groupby('year').size().reset_index()
-        data = {'labels': gb['year'].values.tolist(),
-                'values': gb[0].values.tolist()}
-        return data
+        self.data['labels'] = gb['year'].values.tolist()
+        self.data['ds1'] = {'values': gb[0].values.tolist()}
+        if self.artist_name or self.title:
+            if self.artist_name:
+                sql = '''
+                SELECT artist_name
+                    , year
+                    , u_artist_name
+                FROM songs
+                WHERE u_artist_name = "%s"
+                '''
+                new_df = self._sql_pandas(sql % self.artist_name)
+            if self.title:
+                sql = '''
+                SELECT artist_name
+                    , year
+                    , u_artist_name
+                FROM songs
+                WHERE title = "%s"
+                '''
+                new_df = self._sql_pandas(sql % self.title)
+            new_df = new_df[new_df['artist_name'] != new_df['u_artist_name']]
+            new_gb = new_df.groupby('year').size().reset_index()
+            ds2 = pd.merge(gb, new_gb, how='left', on='year').fillna(0)
+            data = {'values': ds2['0_y']}
+            self.data['ds2'] = data
+        return self.data
 
 
 def save_image(self, img_data, title):
+    '''
+    save png image to aws
+    '''
     save_name = to_snake(title) + '.png'
     path = os.path.join(directory, save_name)
     key = bucket.new_key(path)
@@ -168,8 +249,4 @@ def plot_scatter(df):
 
 
 if __name__ == '__main__':
-    pd.set_option('display.max_rows', 300)
-    pd.set_option('display.max_columns', 10)
-    pd.set_option('display.width', 1000)
-    sql = '''SELECT * FROM songs'''
-    df = pd.read_sql(sql, con=connections['default'])
+    pass

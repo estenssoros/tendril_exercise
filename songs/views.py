@@ -1,3 +1,4 @@
+import json
 import os
 
 import pandas as pd
@@ -18,7 +19,7 @@ from serializers import SongSerializer
 def home(request):
     df = pd.read_sql('select * from songs limit 10', con=connections['default'])
     del df['u_artist_name']
-    table = df.to_html().replace('dataframe', 'table table-hover')
+    table = df.to_html().replace('dataframe', 'table table-striped')
     fields = []
     with open(os.path.join(settings.BASE_DIR, 'field_explanations.txt')) as f:
         for line in f:
@@ -28,7 +29,7 @@ def home(request):
     return render(request, 'songs/home.html', context)
 
 
-def results(request, chart_type=None):
+def results(request):
     cols = ['duration', 'artist_familiarity', 'artist_hotttnesss', 'year']
     df = pd.DataFrame(list(Song.objects.all().values(*cols)))
     for col in cols:
@@ -38,9 +39,30 @@ def results(request, chart_type=None):
 
     numeric_fields = ['DecimalField', 'IntegerField']
     fields = [f.name for f in Song._meta.fields if f.get_internal_type() in numeric_fields]
+
+    charts = [
+        {"name": "song_count_by_year",
+         "backgroundColor": "rgba(255, 99, 132, 0.2)",
+         "borderColor": "rgba(255,99,132,1)"},
+        {"name": "featured_count_by_year",
+         "backgroundColor": "rgba(54, 162, 235, 0.2)",
+         "borderColor": "rgba(54, 162, 235, 1)"},
+        {"name": "hotttnesss_distribution",
+         "backgroundColor": "rgba(255, 206, 86, 0.2)",
+         "borderColor": "rgba(255, 206, 86, 1)"},
+        {"name": "duration_distribution",
+         "backgroundColor": "rgba(75, 192, 192, 0.2)",
+         "borderColor": "rgba(75, 192, 192, 1)"},
+        {"name": "familiarity_distribution",
+         "backgroundColor": "rgba(153, 102, 255, 0.2)",
+         "borderColor": "rgba(153, 102, 255, 1)"},
+    ]
     context = {'fields': fields,
                'desc': desc,
-               'corr': corr, }
+               'corr': corr,
+               'charts': json.dumps(charts)}
+    if request.method == 'GET':
+        context.update(request.GET.dict())
     return render(request, 'songs/results.html', context)
 
 
@@ -72,22 +94,14 @@ class ChartAPI(APIView):
         return Response(data)
 
 
-def make_title(s):
-    s = [x.title() for x in s.split('_')]
-    return ' '.join(s)
-
-
 class PlotAPI(APIView):
     authentication_classes = []
     permission_classes = []
 
     def get(self, request, format=None):
-        plotter = Plotter()
-        query_dict = request.GET
-        chart_type = query_dict.get('chart_type')
-        func = getattr(plotter, chart_type)
-        data = func()
-        data['title'] = make_title(chart_type)
+        query_dict = request.GET.dict()
+        plotter = Plotter(**query_dict)
+        data = plotter.plot()
         return Response(data)
 
 
@@ -98,8 +112,8 @@ class ArtistAutoCompleteAPI(APIView):
     def get(self, request, format=None):
         if request.is_ajax():
             q = request.GET.get('term', '')
-            query_set = Song.objects.filter(artist_name__icontains=q)
-            data = sorted(set([x.artist_name for x in query_set]))
+            query_set = Song.objects.filter(u_artist_name__icontains=q)
+            data = sorted(set([x.u_artist_name for x in query_set]))
             return Response(data)
 
 
@@ -113,33 +127,3 @@ class SongAutoCompleteAPI(APIView):
             query_set = Song.objects.filter(title__icontains=q)
             data = sorted(set([x.title for x in query_set]))
             return Response(data)
-
-# def results(request, chart_type=None):
-#     cols = ['duration', 'artist_familiarity', 'artist_hotttnesss', 'year']
-#     df = pd.DataFrame(list(Song.objects.all().values(*cols)))
-#     for col in cols:
-#         df[col] = df[col].astype(float)
-#     desc = df.describe().drop('count').to_html().replace('dataframe', 'table table-hover')
-#     corr = df.corr().to_html().replace('dataframe', 'table table-hover')
-#
-#     plotter = Plotter()
-#     options = sorted([x for x in dir(plotter) if not x.startswith('_')])
-#     if chart_type == None:
-#         chart_type = 'familiarity_v_hotness'
-#         plotter = getattr(plotter, chart_type)
-#     else:
-#         try:
-#             plotter = getattr(plotter, chart_type)
-#         except AttributeError:
-#             chart_type = 'familiarity_v_hotness'
-#             plotter = getattr(plotter, chart_type)
-#
-#     script, div = plotter()
-#     context = {'desc': desc,
-#                'corr': corr,
-#                'options': options,
-#                'title': chart_type,
-#                'the_script': script,
-#                'the_div': div,
-#                'doc': plotter.__doc__}
-#     return render(request, 'songs/results.html', context)

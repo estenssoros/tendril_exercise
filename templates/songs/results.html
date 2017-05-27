@@ -4,7 +4,8 @@
 {% block head %}
 <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.5.min.js"></script>
 <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.5.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.js"></script>
 <link href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" rel="Stylesheet"></link>
 {% endblock %}
 
@@ -61,19 +62,29 @@
           </div>
         </div>
         <div class="col-sm-6">
-          <canvas id="myChart1" width="400" height="400"></canvas>
+          <canvas id="correlation-chart" width="400" height="400"></canvas>
         </div>
       </div>
     </div>
   </div>
 </div>
+{% if artist_name %}
+<div class="page-header">
+  <h1>Artist: {{artist_name}}</h1>
+</div>
+{% elif title %}
+<div class="page-header">
+  <h1>Title: {{title}}</h1>
+</div>
+{% else %}
 <hr>
+{% endif %}
 <div class="row">
   <div class="col-md-6">
   <form class="form-inline" id="searchform" action="">
     <div class="form-group row">
       <label class="mr-sm-2" for="artist_name">Artist:  </label>
-      <input class="form-control autocomplete ui-autocomplete-input" id="artist_name" placeholder="Start typing..." type="text" name="search">
+      <input class="form-control autocomplete ui-autocomplete-input" id="artist_name" placeholder="Start typing..." type="text" name="artist_name">
     </div>
   </form>
   </div>
@@ -81,7 +92,7 @@
   <form class="form-inline" id="searchform" action="">
     <div class="form-group row">
       <label class="mr-sm-2" for="artist_name">Song:  </label>
-      <input class="form-control autocomplete ui-autocomplete-input" id="song_name" placeholder="Start typing..." type="text" name="search">
+      <input class="form-control autocomplete ui-autocomplete-input" id="song_name" placeholder="Start typing..." type="text" name="title">
     </div>
   </form>
   </div>
@@ -89,21 +100,21 @@
 <hr>
 <div class="row">
   <div class="col-md-6">
-    <canvas id="myChart2" width="400" height="400"></canvas>
+    <canvas id="song_count_by_year" width="400" height="400"></canvas>
   </div>
   <div class="col-md-6">
-  <canvas id="myChart3" width="400" height="400"></canvas>
+  <canvas id="featured_count_by_year" width="400" height="400"></canvas>
   </div>
 </div>
 <div class="row">
   <div class="col-md-4">
-  <canvas id="myChart4" width="400" height="400"></canvas>
+  <canvas id="hotttnesss_distribution" width="400" height="400"></canvas>
   </div>
   <div class="col-md-4">
-    <canvas id="duration-distribution" width="400" height="400"></canvas>
+    <canvas id="duration_distribution" width="400" height="400"></canvas>
   </div>
   <div class="col-md-4">
-    <canvas id="familiarity-distribution" width="400" height="400"></canvas>
+    <canvas id="familiarity_distribution" width="400" height="400"></canvas>
   </div>
 </div>
 
@@ -111,9 +122,11 @@
 {% endblock %}
 {%block scripts%}
 <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js" ></script>
-{%endblock%}
-{% block jquery %}
 
+
+<script>
+  $(document).ready(function(){
+// AUTOCOMPLETES
 $("#artist_name").autocomplete({
   source: "/songs/api/artist_autocomplete/",
   minLength: 3,
@@ -124,6 +137,7 @@ $("#song_name").autocomplete({
   minLength: 3,
 });
 
+// CORRELLATION CHARTS
 $("select").change(function() {
   xAxis = $('#x_axis :selected').val();
   yAxis = $('#y_axis :selected').val();
@@ -137,7 +151,7 @@ $("select").change(function() {
       y_axis: yAxis
     },
     success: function(data) {
-      setChart1(data);
+      setCorrelationChart(data);
     },
     error: function(error_data) {
       console.log("error");
@@ -146,19 +160,15 @@ $("select").change(function() {
   });
 });
 
-function setChart1(data) {
-  var ctx = document.getElementById("myChart1").getContext('2d');
+function setCorrelationChart(data) {
+  var ctx = document.getElementById("correlation-chart").getContext('2d');
   var myChart = new Chart(ctx, {
     type: 'scatter',
     data: {
       datasets: [{
         data: data.scatter,
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.2)'
-        ],
-        borderColor: [
-          'rgba(255,99,132,1)',
-        ],
+        backgroundColor: ['rgba(255, 99, 132, 0.2)'],
+        borderColor: ['rgba(255,99,132,1)'],
         borderWidth: 1,
         pointRadius: 1
       }]
@@ -194,244 +204,69 @@ function setChart1(data) {
     }
   });
 };
-
-$.ajax({
-  method: "GET",
-  url: "/songs/api/plot_api/",
-  data: {
-    chart_type: 'duration_distribution'
-  },
-  success: function(data) {
-    setDurationDist(data);
-  },
-  error: function(error_data) {
-    console.log('error');
-    console.log(error_data);
-  }
-});
-
-function setDurationDist(data) {
-  var ctx = document.getElementById("duration-distribution");
-  var myChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: data.labels,
-      datasets: [{
-        data: data.values,
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1
-      }]
+// BAR CHARTS
+var charts = {{charts|safe}};
+for (var i = 0; i < charts.length; i++){
+  chart_options = charts[i]
+  $.ajax({
+    method: "GET",
+    url: "/songs/api/plot_api",
+    data:{
+      chart_type: charts[i].name,
+      {% if artist_name %}
+        artist_name: "{{ artist_name }}",
+      {% elif title %}
+        title: "{{ title }}"
+      {% endif %}
     },
-    options: {
-      title: {
-        display: true,
-        text: data.title,
-        size: 24,
-      },
-      legend: {
-        display: false
-      },
-      scales: {
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
+    chart_name: chart_options.name,
+    backgroundColor: chart_options.backgroundColor,
+    borderColor: chart_options.borderColor,
+    success: function(data){
+      var ctx = document.getElementById(this.chart_name);
+      var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            data: data.ds1.values,
+            backgroundColor: this.backgroundColor,
+            borderColor: this.borderColor,
+            borderWidth: 1
+            },
+            {
+            {% if artist_name or title %}
+              data:data.ds2.values,
+              backgroundColor:'red',
+            {% endif %}
+            }]
+        },
+        options: {
+          title: {
+            display: true,
+            text: data.title,
+            size: 24,
+          },
+          legend: {
+            display: false
+          },
+          scales: {
+            yAxes: [{
+              ticks: {
+                beginAtZero: true
+              }
+            }]
           }
-        }]
-      }
+        }
+      });
+    },
+    error: function(error_data){
+      console.log('error');
+      console.log(error_data);
     }
   });
-};
-
-$.ajax({
-  method: "GET",
-  url: "/songs/api/plot_api/",
-  data: {
-    chart_type: 'familiarity_distribution'
-  },
-  success: function(data) {
-    setFamiliarityDist(data);
-  },
-  error: function(error_data) {
-    console.log('error');
-    console.log(error_data);
-  }
+}
 });
+</script>
 
-function setFamiliarityDist(data) {
-  var ctx = document.getElementById("familiarity-distribution");
-  var myChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: data.labels,
-      datasets: [{
-        data: data.values,
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        borderColor: 'rgba(153, 102, 255, 1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      title: {
-        display: true,
-        text: data.title,
-        size: 24,
-      },
-      legend: {
-        display: false
-      },
-      scales: {
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-          }
-        }]
-      }
-    }
-  });
-};
-
-$.ajax({
-  method: "GET",
-  url: "/songs/api/plot_api/",
-  data: {
-    chart_type: 'song_count_by_year'
-  },
-  success: function(data) {
-    setChart2(data);
-  },
-  error: function(error_data) {
-    console.log('error');
-    console.log(error_data);
-  }
-});
-
-function setChart2(data) {
-  var ctx = document.getElementById("myChart2");
-  var myChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: data.labels,
-      datasets: [{
-        data: data.values,
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        borderColor: 'rgba(255,99,132,1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      title: {
-        display: true,
-        text: data.title,
-        size: 24,
-      },
-      legend: {
-        display: false
-      },
-      scales: {
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-          }
-        }]
-      }
-    }
-  });
-};
-
-$.ajax({
-  method: "GET",
-  url: "/songs/api/plot_api/",
-  data: {
-    chart_type: 'featured_count_by_year'
-  },
-  success: function(data) {
-    setChart3(data);
-  },
-  error: function(error_data) {
-    console.log('error');
-    console.log(error_data);
-  }
-});
-
-function setChart3(data) {
-  var ctx = document.getElementById("myChart3");
-  var myChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: data.labels,
-      datasets: [{
-        data: data.values,
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      title: {
-        display: true,
-        text: data.title,
-        size: 24,
-      },
-      legend: {
-        display: false
-      },
-      scales: {
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-          }
-        }]
-      }
-    }
-  });
-};
-
-$.ajax({
-  method: "GET",
-  url: "/songs/api/plot_api/",
-  data: {
-    chart_type: 'hotttnesss_distribution'
-  },
-  success: function(data) {
-    setChart4(data);
-  },
-  error: function(error_data) {
-    console.log('error');
-    console.log(error_data);
-  }
-});
-
-function setChart4(data) {
-  var ctx = document.getElementById("myChart4");
-  var myChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: data.labels,
-      datasets: [{
-        data: data.values,
-        backgroundColor: 'rgba(255, 206, 86, 0.2)',
-        borderColor: 'rgba(255, 206, 86, 1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      title: {
-        display: true,
-        text: data.title,
-        size: 24,
-      },
-      legend: {
-        display: false
-      },
-      scales: {
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-          }
-        }]
-      }
-    }
-  });
-};
-{% endblock %}
+{%endblock%}
