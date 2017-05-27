@@ -1,10 +1,12 @@
 # Tendril Exercise
 Software Engineer
 
-## Bokeh charts powered by Django web developement framework
+## Chart.js powered by Django web developement framework
 
-###  Backend: sqlite3, python
-__
+- Ajax calls to Django Rest Framework
+- Backend: sqlite3, python
+
+## Getting Started
 
 Do you have docker?
 
@@ -31,51 +33,3 @@ $ ./start.sh
 
 ## limitiations
 Sqlite doesn't support multi-insert-update statements or update-join statements. Data must be updated iteratively
-
-## file structure
-
-```
-aws.py
-manage.py
-mylogger.py
-README.md
-requirements.txt
-start.sh
-subset_track_metadata.db
-utils.py
-songs/
-    __init__.py
-    admin.py
-    apps.py
-    models.py
-    tests.py
-    urls.py
-    views.py
-    migrations/
-        __init__.py
-    scripts/
-        __init__.py
-        aws.py
-        common_env.py
-        mylogger.py
-        part1.py
-        plotting.py
-    static/
-        songs/
-            css/
-            fonts/
-            js/
-    templatetags/
-        __init__.py
-        songs_extras.py
-templates/
-    songs/
-        base_site.html
-        home.html
-        results.html
-tendril_exercise/
-    __init__.py
-    settings.py
-    urls.py
-    wsgi.py
-```
