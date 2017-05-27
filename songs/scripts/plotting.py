@@ -3,6 +3,7 @@ import os
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from bokeh.charts import HeatMap, Histogram, bins
 from bokeh.embed import components
@@ -32,7 +33,7 @@ class Plotter(object):
     def _sql_pandas(self, sql):
         return pd.read_sql(sql, con=connections['default'])
 
-    def heatmap(self):
+    def hotness_bubble(self):
         '''
         Hotness as impacted by year and duration of song
         '''
@@ -40,6 +41,51 @@ class Plotter(object):
         df = df[df['year'] > 0]
         hm = HeatMap(df, x='year', y=bins('duration'), values='artist_hotttnesss')
         return components(hm, CDN)
+
+    def hotttnesss_distribution(self):
+        '''
+        The distribution of artist hotttness
+        '''
+        df = self._sql_pandas('select artist_hotttnesss from songs')
+        bins = np.linspace(df['artist_hotttnesss'].min(), df['artist_hotttnesss'].max(), 30)
+        binned = pd.cut(df['artist_hotttnesss'], bins)
+        gb = binned.groupby(binned).size().reset_index()
+        _ = [x[1:-1].split(', ') for x in list(gb['artist_hotttnesss'])]
+        labels = []
+        for t in _:
+            labels.append(t[0])
+            labels.append(t[1])
+        data = {'labels': labels[:-1],
+                'values': list(gb[0])}
+        return data
+
+    def familiarity_distribution(self):
+        df = self._sql_pandas('select artist_familiarity from songs')
+        bins = np.linspace(df['artist_familiarity'].min(), df['artist_familiarity'].max(), 30)
+        binned = pd.cut(df['artist_familiarity'], bins)
+        gb = binned.groupby(binned).size().reset_index()
+        _ = [x[1:-1].split(', ') for x in list(gb['artist_familiarity'])]
+        labels = []
+        for t in _:
+            labels.append(t[0])
+            labels.append(t[1])
+        data = {'labels': labels[:-1],
+                'values': list(gb[0])}
+        return data
+
+    def duration_distribution(self):
+        df = self._sql_pandas('select duration from songs')
+        bins = np.linspace(df['duration'].min(), df['duration'].max(), 30)
+        binned = pd.cut(df['duration'], bins)
+        gb = binned.groupby(binned).size().reset_index()
+        _ = [x[1:-1].split(', ') for x in list(gb['duration'])]
+        labels = []
+        for t in _:
+            labels.append(t[0])
+            labels.append(t[1])
+        data = {'labels': labels[:-1],
+                'values': list(gb[0])}
+        return data
 
     def song_count_by_year(self):
         '''
@@ -53,8 +99,8 @@ class Plotter(object):
         GROUP BY year
         '''
         df = self._sql_pandas(sql)
-        data = {'labels': df['year'].values.tolist(),
-                'values': df['cnt'].values.tolist()}
+        data = {'labels': df['year'],
+                'values': df['cnt']}
         return data
 
     def featured_count_by_year(self):
@@ -63,12 +109,14 @@ class Plotter(object):
         '''
         sql = '''
         SELECT artist_name
-            ,year
+            , year
+            , u_artist_name
         FROM songs
         WHERE year > 0
         '''
         df = self._sql_pandas(sql)
-        df = df[['year']][df['artist_name'].str.contains('feat.')]
+        u_names = pd.unique(df['u_artist_name']).tolist()
+        df = df[['year']][~df['artist_name'].isin(u_names)]
         gb = df.groupby('year').size().reset_index()
         data = {'labels': gb['year'].values.tolist(),
                 'values': gb[0].values.tolist()}
