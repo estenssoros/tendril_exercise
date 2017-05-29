@@ -3,11 +3,13 @@ SRC_DIR=$(dirname $0)
 db="subset_track_metadata.db"
 STATIC_DIR="songs/static/songs"
 SCRIPTPATH=`pwd -P`
-
 if [[ $1 = "d" ]]; then
   echo '*** running in docker container ***'
   docker run -it \
   -v $SCRIPTPATH:/home/docker/tendril_exercise \
+  -e SPOTIPY_CLIENT_ID=$SPOTIPY_CLIENT_ID \
+  -e SPOTIPY_CLIENT_SECRET=$SPOTIPY_CLIENT_SECRET \
+  -e SPOTIPY_REDIRECT_URI=$SPOTIPY_REDIRECT_URI \
   -p 8000:8000 \
   estenssoros/tendril:1.0
 else
