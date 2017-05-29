@@ -12,8 +12,8 @@ from rest_framework.views import APIView
 
 from models import Song
 from scripts.plotting import Plotter
-from scripts.search_spotify import find_artist, find_song
-
+from scripts.search_spotify import SebSpotipy
+from pprint import pprint
 
 def home(request):
     df = pd.read_sql('select * from songs limit 10', con=connections['default'])
@@ -26,6 +26,10 @@ def home(request):
             fields.append(dict(zip(['name', 'text'], line)))
     context = {'table': table, 'fields': fields}
     return render(request, 'songs/home.html', context)
+
+
+def create_song_table(artist_name):
+    df = song
 
 
 def results(request):
@@ -60,16 +64,26 @@ def results(request):
                'desc': desc,
                'corr': corr,
                'charts': json.dumps(charts)}
+
     if request.method == 'GET':
+        seb_spotipy = SebSpotipy()
         artist_name = request.GET.get('artist_name')
         title = request.GET.get('title')
         context.update(request.GET.dict())
+        meta_data = None
+        cols = ['u_artist_name', 'title', 'duration', 'artist_familiarity', 'artist_hotttnesss', 'year']
         if artist_name:
-            meta_data = find_artist(artist_name)
+            songs = list(Song.objects.filter(u_artist_name=artist_name).order_by('title').values(*cols))
+            for row in songs:
+                row['preview_url'] = seb_spotipy.artist_track(row['u_artist_name'], row['title'])['preview_url']
+            meta_data = seb_spotipy.find_artist(artist_name)
+            meta_data['songs'] = songs
         if title:
-            meta_data = find_song(title)
+            song = Song.objects.filter(title=title)[0]
+            meta_data = seb_spotipy.artist_track(song.artist_name, title)
+            meta_data['song'] = song
         context['meta_data'] = meta_data
-    print context['meta_data']
+        pprint(context)
     return render(request, 'songs/results.html', context)
 
 

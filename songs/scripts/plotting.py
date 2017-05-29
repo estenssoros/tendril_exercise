@@ -1,24 +1,13 @@
-import io
 import os
 
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from bokeh.charts import HeatMap, Histogram, bins
-from bokeh.embed import components
-from bokeh.models import Range1d
-from bokeh.plotting import figure
-from bokeh.resources import CDN
 from django.conf import settings
 from django.db import connections
-from pandas.tools.plotting import scatter_matrix
 from tqdm import tqdm
 
 import common_env
 from aws import connect_s3
-
-matplotlib.use('Agg')
 
 
 def ensure_exists(path):
@@ -41,11 +30,27 @@ def bins_to_list(bins):
     return labels
 
 
+def html_decode(s):
+    """
+    Returns the ASCII decoded version of the given HTML string. This does
+    NOT remove normal HTML tags like <p>.
+    """
+    htmlCodes = (
+        ("'", '&#39;'),
+        ('"', '&quot;'),
+        ('>', '&gt;'),
+        ('<', '&lt;'),
+        ('&', '&amp;')
+    )
+    for code in htmlCodes:
+        s = s.replace(code[1], code[0])
+    return s
+
 class Plotter(object):
     def __init__(self, chart_type, artist_name=None, title=None):
         self.plot = getattr(self, chart_type)
-        self.artist_name = artist_name
-        self.title = title
+        self.artist_name = html_decode(artist_name) if artist_name else None
+        self.title = html_decode(title) if title else None
         self.data = {'title': make_title(chart_type)}
 
     def _sql_pandas(self, sql):
@@ -212,6 +217,11 @@ def save_image(self, img_data, title):
 
 
 def plot_scatter(df):
+    '''
+    import io
+    import matplotlib.pyplot as plt
+    from pandas import scatter_matrix
+    '''
     for col in df.columns:
         df[col] = df[col].astype(float)
     axs = scatter_matrix(df, alpha=0.2, figsize=(6, 6), diagonal='kde')
