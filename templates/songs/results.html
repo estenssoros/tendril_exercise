@@ -73,13 +73,40 @@
   <h1>Artist: {{artist_name}}</h1>
 </div>
 <div class="row">
-  <div class="col-md-6">
+  <div class="col-md-3">
     <img src="{{meta_data.image_url}}" class="img-thumbnail">
   </div>
-  <div class="col-md-6">
-    <audio controls autoplay>
-      <source src="{{meta_data.preview_url}}" type="audio/mp3">
-    </audio>
+  <div class="col-md-9">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Duration</th>
+            <th>Familiarity</th>
+            <th>Hotttnesss</th>
+            <th>Year</th>
+            <th>Preview Url</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for song in meta_data.songs %}
+            <tr>
+              <td>{{song.title}}</td>
+              <td>{{song.duration}}</td>
+              <td>{{song.artist_familiarity}}</td>
+              <td>{{song.artist_hotttnesss}}</td>
+              <td>{{song.year}}</td>
+              <td>
+                <audio controls {% if forloop.first %}autoplay{% endif %}>
+                  <source src="{{song.preview_url}}" type="audio/mp3">
+                </audio>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 <hr>
@@ -88,13 +115,36 @@
   <h1>Title: {{title}}</h1>
 </div>
 <div class="row">
-  <div class="col-md-6">
+  <div class="col-md-3">
     <img src="{{meta_data.image_url}}" class="img-thumbnail">
   </div>
-  <div class="col-md-6">
-    <audio controls autoplay>
-      <source src="{{meta_data.preview_url}}" type="audio/mp3">
-    </audio>
+  <div class="col-md-9">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Duration</th>
+          <th>Familiarity</th>
+          <th>Hotttnesss</th>
+          <th>Year</th>
+          <th>Preview Url</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr>
+            <td>{{meta_data.song.title}}</td>
+            <td>{{meta_data.song.duration}}</td>
+            <td>{{meta_data.song.artist_familiarity}}</td>
+            <td>{{meta_data.song.artist_hotttnesss}}</td>
+            <td>{{meta_data.song.year}}</td>
+            <td>
+              <audio controls autoplay>
+                <source src="{{meta_data.preview_url}}" type="audio/mp3">
+              </audio>
+            </td>
+          </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 <hr>
@@ -163,11 +213,10 @@ $("#song_name").autocomplete({
 $("select").change(function() {
   xAxis = $('#x_axis :selected').val();
   yAxis = $('#y_axis :selected').val();
-  var endpoint = '/songs/api/chart/';
   var defaultData = [];
   $.ajax({
     method: "GET",
-    url: endpoint,
+    url: '/songs/api/chart/',
     data: {
       x_axis: xAxis,
       y_axis: yAxis
