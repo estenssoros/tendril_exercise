@@ -3,6 +3,13 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
 
+def replace_braces(s):
+    braces = list('(){}[]')
+    for b in braces:
+        s = s.replace(b, '')
+    return s
+
+
 class SebSpotipy(object):
     def __init__(self):
         self.sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
@@ -42,12 +49,18 @@ class SebSpotipy(object):
             return {'uri': uri, 'preview_url': preview_url, 'image_url': image_url}
 
     def artist_track(self, artist, title):
+        artist = replace_braces(artist)
+        title = replace_braces(title)
         q = 'artist:{0} track:{1}'.format(artist.encode('utf-8'), title.encode('utf-8'))
         results = self.sp.search(q=q)
         tracks = results['tracks']['items']
+        uri, image_url = None, None
         for track in tracks:
             uri = track['uri']
-            image_url = track['album']['images'][0]['url']
+            try:
+                image_url = track['album']['images'][0]['url']
+            except IndexError:
+                image_url = None
             if track.get('preview_url'):
                 return {'uri': uri, 'preview_url': track['preview_url'], 'image_url': image_url}
         return {'uri': uri, 'preview_url': None, 'image_url': image_url}

@@ -83,7 +83,6 @@ def results(request):
             meta_data = seb_spotipy.artist_track(song.artist_name, title)
             meta_data['song'] = song
         context['meta_data'] = meta_data
-        pprint(context)
     return render(request, 'songs/results.html', context)
 
 

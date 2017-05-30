@@ -98,9 +98,13 @@
               <td>{{song.artist_hotttnesss}}</td>
               <td>{{song.year}}</td>
               <td>
+                {%if song.preview_url%}
                 <audio controls {% if forloop.first %}autoplay{% endif %}>
                   <source src="{{song.preview_url}}" type="audio/mp3">
                 </audio>
+                {%else%}
+                Preview Not Available
+                {%endif%}
               </td>
             </tr>
           {% endfor %}
