@@ -52,6 +52,7 @@ class Plotter(object):
         self.artist_name = html_decode(artist_name) if artist_name else None
         self.title = html_decode(title) if title else None
         self.data = {'title': make_title(chart_type)}
+        self.num_bins=50
 
     def _sql_pandas(self, sql):
         return pd.read_sql(sql, con=connections['default'])
@@ -61,7 +62,7 @@ class Plotter(object):
         The distribution of artist hotttness
         '''
         df = self._sql_pandas('select artist_hotttnesss from songs')
-        bins = np.linspace(df['artist_hotttnesss'].min(), df['artist_hotttnesss'].max(), 30)
+        bins = np.linspace(df['artist_hotttnesss'].min(), df['artist_hotttnesss'].max(), self.num_bins)
         binned = pd.cut(df['artist_hotttnesss'], bins)
         gb = binned.groupby(binned).size().reset_index()
         labels = bins_to_list(gb['artist_hotttnesss'])
@@ -84,7 +85,7 @@ class Plotter(object):
 
     def familiarity_distribution(self):
         df = self._sql_pandas('select artist_familiarity from songs')
-        bins = np.linspace(df['artist_familiarity'].min(), df['artist_familiarity'].max(), 30)
+        bins = np.linspace(df['artist_familiarity'].min(), df['artist_familiarity'].max(), self.num_bins)
         binned = pd.cut(df['artist_familiarity'], bins)
         gb = binned.groupby(binned).size().reset_index()
         labels = bins_to_list(gb['artist_familiarity'])
@@ -105,7 +106,7 @@ class Plotter(object):
 
     def duration_distribution(self):
         df = self._sql_pandas('select duration from songs')
-        bins = np.linspace(df['duration'].min(), df['duration'].max(), 30)
+        bins = np.linspace(df['duration'].min(), df['duration'].max(), self.num_bins)
         binned = pd.cut(df['duration'], bins)
         gb = binned.groupby(binned).size().reset_index()
         labels = bins_to_list(gb['duration'])
