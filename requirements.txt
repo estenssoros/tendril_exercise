@@ -1,10 +1,5 @@
 Django==1.10.6
 tqdm==4.11.2
 pandas==0.19.2
-bokeh==0.12.5
-matplotlib==2.0.0
-boto==2.45.0
-botocore==1.5.41
-scipy
 djangorestframework==3.6.2
 spotipy==2.4.4
