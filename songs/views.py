@@ -73,14 +73,13 @@ def results(request):
 
         if not seb_spotipy.connected:
             message = '''
-            WARNING: Spotify tokens not present.
+            WARNING: Spotify tokens not present or incorrect.
             Please visit <a href="https://developer.spotify.com/my-applications/#!/applications" targe="_blank">Spotify</a>
             or contact <a href="http://estenssoros.com/" target="_blank">Sebastian Estenssoro</a>
             '''
             messages.warning(request, message)
             context.pop('artist_name', None)
             context.pop('title', None)
-            print context
             return render(request, 'songs/results.html', context)
 
         meta_data = None
