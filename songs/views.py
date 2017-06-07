@@ -2,8 +2,8 @@ import json
 import os
 
 import pandas as pd
-import spotipy
 from django.conf import settings
+from django.contrib import messages
 from django.core.exceptions import FieldError
 from django.db import connections
 from django.shortcuts import render
@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from models import Song
 from scripts.plotting import Plotter
 from scripts.search_spotify import SebSpotipy
-from pprint import pprint
+
 
 def home(request):
     df = pd.read_sql('select * from songs limit 10', con=connections['default'])
@@ -70,6 +70,19 @@ def results(request):
         artist_name = request.GET.get('artist_name')
         title = request.GET.get('title')
         context.update(request.GET.dict())
+
+        if not seb_spotipy.connected:
+            message = '''
+            WARNING: Spotify tokens not present.
+            Please visit <a href="https://developer.spotify.com/my-applications/#!/applications" targe="_blank">Spotify</a>
+            or contact <a href="http://estenssoros.com/" target="_blank">Sebastian Estenssoro</a>
+            '''
+            messages.warning(request, message)
+            context.pop('artist_name', None)
+            context.pop('title', None)
+            print context
+            return render(request, 'songs/results.html', context)
+
         meta_data = None
         cols = ['u_artist_name', 'title', 'duration', 'artist_familiarity', 'artist_hotttnesss', 'year']
         if artist_name:

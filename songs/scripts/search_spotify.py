@@ -1,6 +1,6 @@
 # coding: utf-8
 import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.oauth2 import SpotifyClientCredentials, SpotifyOauthError
 
 
 def replace_braces(s):
@@ -12,7 +12,11 @@ def replace_braces(s):
 
 class SebSpotipy(object):
     def __init__(self):
-        self.sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
+        try:
+            self.sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
+            self.connected = True
+        except SpotifyOauthError:
+            self.connected = False
 
     def get_top_track(self, uri):
         results = self.sp.artist_top_tracks(uri)
