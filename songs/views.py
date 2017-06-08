@@ -44,7 +44,10 @@ def results(request):
     fields = [f.name for f in Song._meta.fields if f.get_internal_type() in numeric_fields]
     cols = ['u_artist_name', 'title', 'duration', 'artist_familiarity', 'artist_hotttnesss', 'year']
     df = pd.DataFrame(list(Song.objects.filter(my_songs=1).values(*cols)))
-    my_songs_table = df[cols].to_html().replace('dataframe', 'table table-hover')
+    if len(df)>0:
+        my_songs_table = df[cols].to_html().replace('dataframe', 'table table-hover')
+    else:
+        my_songs_table=None
 
     charts = [
         {"name": "song_count_by_year",
