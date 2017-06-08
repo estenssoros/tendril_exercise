@@ -1,7 +1,7 @@
 # coding: utf-8
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials, SpotifyOauthError
-
+from django.conf import settings
 
 def replace_braces(s):
     braces = list('(){}[]')
@@ -35,7 +35,7 @@ class SebSpotipy(object):
         items = results['artists']['items']
         if len(items) > 0:
             artist = items[0]
-            image_url = artist['images'][0]['url']
+            image_url = artist['images'][0]['url'] if artist['images'] else settings.NO_IMAGE_URL
             song = artist['id']
             uri = artist['uri']
             preview_url = self.get_top_track(uri)
@@ -71,5 +71,5 @@ class SebSpotipy(object):
 
 
 if __name__ == '__main__':
-    artist = find_artist('Taylor Swift')
-    song = find_song('Wildest Dreams')
+    seb = SebSpotipy()
+    seb.find_artist('Snowpatrol')
