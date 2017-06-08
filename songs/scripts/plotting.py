@@ -46,82 +46,46 @@ def html_decode(s):
         s = s.replace(code[1], code[0])
     return s
 
+
 class Plotter(object):
     def __init__(self, chart_type, artist_name=None, title=None):
         self.plot = getattr(self, chart_type)
         self.artist_name = html_decode(artist_name) if artist_name else None
         self.title = html_decode(title) if title else None
         self.data = {'title': make_title(chart_type)}
-        self.num_bins=50
+        self.num_bins = 50
 
     def _sql_pandas(self, sql):
         return pd.read_sql(sql, con=connections['default'])
 
+    def _remove_outliers(self, df, col):
+        return df[np.abs(df[col] - df[col].mean()) <= (3 * df[col].std())]
+
     def hotttnesss_distribution(self):
-        '''
-        The distribution of artist hotttness
-        '''
-        df = self._sql_pandas('select artist_hotttnesss from songs')
-        bins = np.linspace(df['artist_hotttnesss'].min(), df['artist_hotttnesss'].max(), self.num_bins)
-        binned = pd.cut(df['artist_hotttnesss'], bins)
-        gb = binned.groupby(binned).size().reset_index()
-        labels = bins_to_list(gb['artist_hotttnesss'])
-        self.data['labels'] = labels[:-1]
-        self.data['ds1'] = {'values': list(gb[0])}
-
-        if self.artist_name or self.title:
-            if self.artist_name:
-                df = self._sql_pandas('select artist_hotttnesss from songs where u_artist_name = "%s"' % self.artist_name)
-            if self.title:
-                df = self._sql_pandas('select artist_hotttnesss from songs where title = "%s"' % self.title)
-            binned = pd.cut(df['artist_hotttnesss'], bins).tolist()
-            m = gb['artist_hotttnesss'].isin(binned)
-            ds2 = gb.copy()
-            ds2.loc[~m, 0] = 0
-            data = {'values': list(ds2[0])}
-            self.data['ds2'] = data
-
-        return self.data
+        return self._create_histogram('artist_hotttnesss', remove_outliers=False, rounding=2)
 
     def familiarity_distribution(self):
-        df = self._sql_pandas('select artist_familiarity from songs')
-        bins = np.linspace(df['artist_familiarity'].min(), df['artist_familiarity'].max(), self.num_bins)
-        binned = pd.cut(df['artist_familiarity'], bins)
-        gb = binned.groupby(binned).size().reset_index()
-        labels = bins_to_list(gb['artist_familiarity'])
-        self.data['labels'] = labels[:-1]
-        self.data['ds1'] = {'values': list(gb[0])}
-        if self.artist_name or self.title:
-            if self.artist_name:
-                df = self._sql_pandas('select artist_familiarity from songs where u_artist_name = "%s"' % self.artist_name)
-            if self.title:
-                df = self._sql_pandas('select artist_familiarity from songs where title = "%s"' % self.title)
-            binned = pd.cut(df['artist_familiarity'], bins).tolist()
-            m = gb['artist_familiarity'].isin(binned)
-            ds2 = gb.copy()
-            ds2.loc[~m, 0] = 0
-            data = {'values': list(ds2[0])}
-            self.data['ds2'] = data
-        return self.data
+        return self._create_histogram('artist_familiarity', remove_outliers=True, rounding=2)
 
     def duration_distribution(self):
-        df = self._sql_pandas('select duration from songs')
-        bins = np.linspace(df['duration'].min(), df['duration'].max(), self.num_bins)
-        binned = pd.cut(df['duration'], bins)
-        gb = binned.groupby(binned).size().reset_index()
-        labels = bins_to_list(gb['duration'])
-        self.data['labels'] = labels[:-1]
-        self.data['ds1'] = {'values': list(gb[0])}
+        return self._create_histogram('duration', remove_outliers=True, rounding=0)
+
+    def _create_histogram(self, col, remove_outliers=False, rounding=0):
+        df = self._sql_pandas('select %s from songs' % col)
+        if remove_outliers:
+            df = self._remove_outliers(df, col)
+        count1, labels = np.histogram(df[col], bins=self.num_bins)
+        bins = [round(x, rounding) for x in labels]
+        self.data['labels'] = bins
+        self.data['ds1'] = {'values': count1.tolist()}
         if self.artist_name or self.title:
             if self.artist_name:
-                df = self._sql_pandas('select duration from songs where u_artist_name = "%s"' % self.artist_name)
+                df = self._sql_pandas('select %s from songs where u_artist_name = "%s"' % (col, self.artist_name))
             if self.title:
-                df = self._sql_pandas('select duration from songs where title = "%s"' % self.title)
-            binned = pd.cut(df['duration'], bins).tolist()
-            m = gb['duration'].isin(binned)
-            ds2 = gb.copy()
-            ds2.loc[~m, 0] = 0
-            data = {'values': list(ds2[0])}
+                df = self._sql_pandas('select %s from songs where title = "%s"' % (col, self.title))
+            count2, _ = np.histogram(df[col], bins=bins)
+            count2[count2 > 0] = count1[count2 > 0]
+            data = {'values': count2.tolist()}
             self.data['ds2'] = data
         return self.data
 
