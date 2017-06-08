@@ -47,7 +47,7 @@ class Songs(object):
         for artist_id in tqdm(artist_ids):
             sub_df = gb[gb['artist_id'] == artist_id]
             sub_df.sort_values(0, ascending=False)
-            artist_translate[artist_id] = sub_df.iloc[0]['artist_name']
+            artist_translate[artist_id] = sub_df.iloc[0]['artist_name'].title()
         df['u_artist_name'] = df.apply(lambda x: artist_translate[x['artist_id']], axis=1)
         return df
 
