@@ -210,6 +210,18 @@
   </div>
 </div>
 
+{% if my_songs_table %}
+<div class="row">
+  <div class="panel panel-primary">
+    <div class="panel-heading">My Songs</div>
+    <div class="panel-body">
+      <div class="table-responsive">
+        {{ my_songs_table|safe }}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 {% endblock %}
 {%block scripts%}

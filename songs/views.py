@@ -42,6 +42,9 @@ def results(request):
 
     numeric_fields = ['DecimalField', 'IntegerField']
     fields = [f.name for f in Song._meta.fields if f.get_internal_type() in numeric_fields]
+    cols = ['u_artist_name', 'title', 'duration', 'artist_familiarity', 'artist_hotttnesss', 'year']
+    df = pd.DataFrame(list(Song.objects.filter(my_songs=1).values(*cols)))
+    my_songs_table = df[cols].to_html().replace('dataframe', 'table table-hover')
 
     charts = [
         {"name": "song_count_by_year",
@@ -63,7 +66,8 @@ def results(request):
     context = {'fields': fields,
                'desc': desc,
                'corr': corr,
-               'charts': json.dumps(charts)}
+               'charts': json.dumps(charts),
+               'my_songs_table': my_songs_table}
 
     if request.method == 'GET':
         seb_spotipy = SebSpotipy()
