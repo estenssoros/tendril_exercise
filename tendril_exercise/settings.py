@@ -120,3 +120,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+NO_IMAGE_URL = 'https://s3.amazonaws.com/sebsbucket/cdn/no_image_available.png'
