@@ -81,6 +81,7 @@
       <table class="table table-hover">
         <thead>
           <tr>
+            <th>My Songs</th>
             <th>Title</th>
             <th>Duration</th>
             <th>Familiarity</th>
@@ -92,6 +93,9 @@
         <tbody>
           {% for song in meta_data.songs %}
             <tr>
+              <td>
+                <input type="checkbox" value="{{song.track_id}}" {%if song.my_songs == 1 %} checked{%endif%}>
+              </td>
               <td>{{song.title}}</td>
               <td>{{song.duration}}</td>
               <td>{{song.artist_familiarity}}</td>
@@ -126,6 +130,7 @@
     <table class="table table-hover">
       <thead>
         <tr>
+          <th>My Songs</th>
           <th>Title</th>
           <th>Duration</th>
           <th>Familiarity</th>
@@ -136,6 +141,9 @@
       </thead>
       <tbody>
           <tr>
+            <td>
+              <input type="checkbox" value="{{meta_data.song.track_id}}" {% if meta_data.song.mysongs == 1%}checked{% endif %}>
+            </td>
             <td>{{meta_data.song.title}}</td>
             <td>{{meta_data.song.duration}}</td>
             <td>{{meta_data.song.artist_familiarity}}</td>
@@ -242,7 +250,19 @@ $("select").change(function() {
     }
   });
 });
+$("input[type=checkbox]").change(function(){
 
+  $.ajax({
+    method: "POST",
+    url: '/songs/api/add_song/',
+    data: {
+      track_id: this.value
+    },
+    success: function(data){
+      console.log(data);
+    },
+  });
+});
 function setCorrelationChart(data) {
   var ctx = document.getElementById("correlation-chart").getContext('2d');
   var myChart = new Chart(ctx, {
@@ -350,6 +370,7 @@ for (var i = 0; i < charts.length; i++){
   });
 }
 });
+
 </script>
 
 {%endblock%}

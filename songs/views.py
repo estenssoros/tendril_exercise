@@ -83,7 +83,7 @@ def results(request):
             return render(request, 'songs/results.html', context)
 
         meta_data = None
-        cols = ['u_artist_name', 'title', 'duration', 'artist_familiarity', 'artist_hotttnesss', 'year']
+        cols = ['track_id', 'u_artist_name', 'title', 'duration', 'artist_familiarity', 'artist_hotttnesss', 'year', 'my_songs']
         if artist_name:
             songs = list(Song.objects.filter(u_artist_name=artist_name).order_by('title').values(*cols))
             for row in songs:
@@ -159,3 +159,20 @@ class SongAutoCompleteAPI(APIView):
             query_set = Song.objects.filter(title__icontains=q)
             data = sorted(set([x.title for x in query_set]))
             return Response(data)
+
+
+class AddSong(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request, format=None):
+        track_id = request.POST.get('track_id', None)
+        if track_id:
+            track = Song.objects.filter(track_id=track_id)[0]
+            if track.my_songs == 1:
+                track.my_songs = 0
+            else:
+                track.my_songs = 1
+            track.save()
+            return Response('{} changed!'.format(track_id))
+        return Response('nothing to do...')

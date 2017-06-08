@@ -10,5 +10,6 @@ urlpatterns = [
     url(r'^api/plot_api/$', views.PlotAPI.as_view()),
     url(r'^api/artist_autocomplete/$', views.ArtistAutoCompleteAPI.as_view()),
     url(r'^api/song_autocomplete/$', views.SongAutoCompleteAPI.as_view()),
+    url(r'^api/add_song/$', views.AddSong.as_view()),
 ]
 urlpatterns = format_suffix_patterns(urlpatterns)
