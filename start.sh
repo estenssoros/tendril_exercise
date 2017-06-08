@@ -23,6 +23,7 @@ else
 
   sqlite3 $db "ALTER TABLE songs ADD sha256 VARCHAR(64) DEFAULT NULL"
   sqlite3 $db "ALTER TABLE songs ADD u_artist_name VARCHAR(256) DEFAULT NULL"
+  sqlite3 $db "ALTER TABLE songs ADD my_songs INT DEFAULT 0"
 
   pip install -r requirements.txt
   python $SRC_DIR/songs/scripts/part1.py --run

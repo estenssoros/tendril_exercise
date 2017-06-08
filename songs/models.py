@@ -17,6 +17,7 @@ class Song(models.Model):
     year = models.IntegerField(blank=True, null=True)
     sha256 = models.CharField(max_length=64, blank=True, null=True)
     u_artist_name = models.CharField(max_length=256, blank=True, null=True)
+    my_songs = models.IntegerField(blank=True, null=True, default=0)
 
     class Meta:
         db_table = 'songs'
